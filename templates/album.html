@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Álbum · Legion Lunari</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Oswald:wght@300;500;600;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="album-body">
+  <canvas id="dust" aria-hidden="true"></canvas>
+
+  <header class="hud">
+    <div class="hud-left">
+      <img class="hud-logo" src="{{ url_for('static', filename='img/legion-lunari-logo.png') }}" alt="Legión Lunari">
+      <span class="hud-brandwrap">
+        <span class="hud-brand">LEGIÓN LUNARI</span>
+        <span class="hud-user">MSI 2026 × @{{ user }}</span>
+      </span>
+    </div>
+    <nav class="hud-tabs" id="tabs" aria-label="Secciones"></nav>
+    <div class="hud-right">
+      <div class="progress" title="Figuras conseguidas">
+        <span class="progress-count" id="progressCount">0 / 0</span>
+        <div class="progress-bar"><i id="progressFill"></i></div>
+      </div>
+      <a class="hud-logout" href="{{ url_for('logout') }}" title="Cerrar sesión">Salir</a>
+    </div>
+  </header>
+
+  <main class="stage">
+    <button class="pager pager-prev" id="prevBtn" aria-label="Página anterior" disabled>
+      <svg viewBox="0 0 24 24" width="28" height="28"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></svg>
+    </button>
+
+    <div class="book-wrap">
+      <div class="book" id="book" aria-live="polite">
+      </div>
+      <p class="book-hint" id="bookHint">Usa las flechas ← → o las pestañas para pasar de página</p>
+    </div>
+
+    <button class="pager pager-next" id="nextBtn" aria-label="Página siguiente">
+      <svg viewBox="0 0 24 24" width="28" height="28"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </main>
+
+  <div class="loading" id="loading"><span>Abriendo el álbum…</span></div>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lbClose" aria-label="Cerrar">✕</button>
+    <div class="lightbox-inner">
+      <div class="holo-card" id="holoCard">
+        <img id="lbImg" alt="">
+        <div class="holo-shine" aria-hidden="true"></div>
+        <div class="holo-glare" aria-hidden="true"></div>
+      </div>
+      <div class="lightbox-meta" id="lbMeta"></div>
+    </div>
+  </div>
+
+  <script>window.STICKER_USER = {{ user | tojson }};</script>
+  <script src="{{ url_for('static', filename='js/vendor/page-flip.browser.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/embers.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/album.js') }}"></script>
+</body>
+</html>
