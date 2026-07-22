@@ -2,7 +2,7 @@
 
 Álbum de stickers digital e interactivo para la comunidad de **Legión Lunari**, con temática del **MSI 2026**. 
 
-![resumen](static/album/pages/page_00.jpg)
+![resumen](dist/album/pages/page_00.jpg)
 
 ## Estructura del proyecto
 
