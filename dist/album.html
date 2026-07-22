@@ -7,17 +7,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Oswald:wght@300;500;600;700&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="css/style.css?v=70899341">
+  <link rel="stylesheet" href="pack/pack.css?v=70899341">
 </head>
 <body class="album-body">
   <canvas id="dust" aria-hidden="true"></canvas>
 
   <header class="hud">
     <div class="hud-left">
-      <img class="hud-logo" src="{{ url_for('static', filename='img/legion-lunari-logo.png') }}" alt="Legión Lunari">
+      <img class="hud-logo" src="img/legion-lunari-logo.png" alt="Legión Lunari">
       <span class="hud-brandwrap">
         <span class="hud-brand">LEGIÓN LUNARI</span>
-        <span class="hud-user">MSI 2026 × @{{ user }}</span>
+        <span class="hud-user">MSI 2026 × @lilywaterbug</span>
       </span>
     </div>
     <nav class="hud-tabs" id="tabs" aria-label="Secciones"></nav>
@@ -26,7 +27,7 @@
         <span class="progress-count" id="progressCount">0 / 0</span>
         <div class="progress-bar"><i id="progressFill"></i></div>
       </div>
-      <a class="hud-logout" href="{{ url_for('logout') }}" title="Cerrar sesión">Salir</a>
+      <a class="hud-logout" href="/api/logout" title="Cerrar sesión">Salir</a>
     </div>
   </header>
 
@@ -37,6 +38,7 @@
 
     <div class="book-wrap">
       <div class="book" id="book" aria-live="polite">
+        
       </div>
       <p class="book-hint" id="bookHint">Usa las flechas ← → o las pestañas para pasar de página</p>
     </div>
@@ -60,9 +62,11 @@
     </div>
   </div>
 
-  <script>window.STICKER_USER = {{ user | tojson }};</script>
-  <script src="{{ url_for('static', filename='js/vendor/page-flip.browser.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/embers.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/album.js') }}"></script>
+  <script>window.STICKER_USER = "lilywaterbug";</script>
+  <script src="js/vendor/page-flip.browser.js?v=70899341"></script>
+  <script src="js/embers.js?v=70899341"></script>
+  <script src="pack/pack.js?v=70899341"></script>
+  <script>window.ALBUM_CONFIG={collection:"album/collection.json?v=70899341",slots:"album/slots.json?v=70899341",pages:"album/pages/",packAssets:"pack/"};</script>
+  <script src="js/album.js?v=70899341"></script>
 </body>
 </html>

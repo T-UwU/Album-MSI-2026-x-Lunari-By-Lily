@@ -1,5 +1,9 @@
+
 (function () {
   "use strict";
+
+  document.documentElement.style.overflow = "hidden";
+  document.documentElement.style.overscrollBehavior = "none";
 
   const book = document.getElementById("book");
   const prevBtn = document.getElementById("prevBtn");
@@ -9,10 +13,11 @@
   const progressCount = document.getElementById("progressCount");
   const progressFill = document.getElementById("progressFill");
 
-  const PAGES_URL = "/static/album/pages/";
-  const SLOTS_URL = "/static/album/slots.json";
+  const CFG = window.ALBUM_CONFIG || {};
+  const PAGES_URL = CFG.pages || "/static/album/pages/";
+  const SLOTS_URL = CFG.slots || "/static/album/slots.json";
+  const COLLECTION_URL = CFG.collection || "/api/collection";
 
-  // Rareza por rango de número.
   const RARITY_ACCENT = {
     legendaria: "#f2ce7e",
     epica: "#b06cff",
@@ -20,13 +25,12 @@
     especial: "#e0563f",
   };
   function rarityForNumber(n) {
-    if (n === 1 || (n >= 125 && n <= 129)) return "legendaria"; // emblema, first stand
-    if (n >= 2 && n <= 12) return "rara";                        // escudos
-    if (n >= 13 && n <= 100) return "especial";                 // equipos
-    return "epica";                                              // estrellas, mvp, duplas, especiales
+    if (n === 1 || (n >= 125 && n <= 129)) return "legendaria"; 
+    if (n >= 2 && n <= 12) return "rara";                        
+    if (n >= 13 && n <= 100) return "especial";                 
+    return "epica";                                              
   }
 
-  // Pestañas
   const SECTIONS = [
     { name: "Portada", page: 0 },
     { name: "Escudos", page: 5 },
@@ -47,7 +51,7 @@
     manifest.forEach((pg, idx) => {
       const el = document.createElement("div");
       el.className = "page";
-      const hard = idx === 0 || idx === manifest.length - 1; // tapas duras
+      const hard = idx === 0 || idx === manifest.length - 1; 
       if (hard) {
         el.classList.add("page-hard");
         el.setAttribute("data-density", "hard");
@@ -80,7 +84,7 @@
           st.alt = "Figura " + s.n;
           st.draggable = false;
           hot.appendChild(st);
-          // capa recortada para el barrido holográfico
+          
           const shine = document.createElement("span");
           shine.className = "slot-shine";
           hot.appendChild(shine);
@@ -101,7 +105,7 @@
 
     pageFlip = new St.PageFlip(book, {
       width: 520,
-      height: 735, // relación A (~1.414)
+      height: 735, 
       size: "stretch",
       minWidth: 300,
       maxWidth: 700,
@@ -114,7 +118,7 @@
       usePortrait: true,
       autoSize: true,
       mobileScrollSupport: false,
-      useMouseEvents: false,  
+      useMouseEvents: false,   
       clickEventForward: true,
       disableFlipByClick: true,
     });
@@ -144,34 +148,68 @@
     requestAnimationFrame(() => { progressFill.style.width = pct + "%"; });
   }
 
-  // navegación
-
   function updateChrome(pageIndex) {
     if (pageIndex == null) pageIndex = pageFlip ? pageFlip.getCurrentPageIndex() : 0;
     prevBtn.disabled = pageIndex <= 0;
     nextBtn.disabled = pageIndex >= totalPages - 1;
+    
     const right = pageIndex + 1;
     let active = SECTIONS[0];
     SECTIONS.forEach((s) => {
       if (s.page <= right) active = s;
     });
     tabsEl.querySelectorAll(".tab").forEach((t) => {
-      t.classList.toggle("active", Number(t.dataset.page) === active.page);
+      const on = Number(t.dataset.page) === active.page;
+      t.classList.toggle("active", on);
+      
+      if (on && tabsEl.scrollWidth > tabsEl.clientWidth) {
+        t.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      }
     });
   }
 
-  function goNext() { if (pageFlip && !jumping) pageFlip.flipNext(); }
-  function goPrev() { if (pageFlip && !jumping) pageFlip.flipPrev(); }
+  function isPortrait() {
+    return pageFlip && pageFlip.getOrientation && pageFlip.getOrientation() === "portrait";
+  }
+  function goNext() {
+    if (!pageFlip || jumping) return;
+    if (!isPortrait()) { pageFlip.flipNext(); return; }
+
+    const c = pageFlip.getCurrentPageIndex();
+    if (c >= totalPages - 1) return;
+    pageFlip.flip(c + 1);
+    setTimeout(() => {
+      if (pageFlip.getCurrentPageIndex() === c) {
+        pageFlip.turnToPage(c + 1);
+        updateChrome(c + 1);
+      }
+    }, 820);
+  }
+  function goPrev() {
+    if (!pageFlip || jumping) return;
+    
+    if (isPortrait()) { pageFlip.turnToPrevPage(); updateChrome(pageFlip.getCurrentPageIndex()); }
+    else pageFlip.flipPrev();
+  }
 
   let jumping = false;
 
   function jumpTo(page) {
     if (!pageFlip || jumping) return;
+
+    if (isPortrait()) {
+      if (pageFlip.getCurrentPageIndex() === page) return;
+      pageFlip.turnToPage(page);
+      updateChrome(pageFlip.getCurrentPageIndex());
+      return;
+    }
+
     page = page <= 0 ? 0 : (page % 2 === 1 ? page : page - 1);
     const start = pageFlip.getCurrentPageIndex();
     if (start === page) return;
 
     const dir = page > start ? 1 : -1;
+    
     const flips = Math.max(1, Math.round(Math.abs(page - start) / 2));
     const TURN_TIME = Math.max(110, Math.min(300, 340 - flips * 15));
 
@@ -188,10 +226,11 @@
       jumping = false;
       updateChrome(c);
     }
-    function armWatchdog() {                    
+    function armWatchdog() {                     
       if (watchdog) clearTimeout(watchdog);
       watchdog = setTimeout(() => finish(pageFlip.getCurrentPageIndex()), TURN_TIME + 900);
     }
+
     function onFlip() {
       const c = pageFlip.getCurrentPageIndex();
       if ((dir > 0 ? c >= page : c <= page)) { finish(c); return; }
@@ -200,7 +239,7 @@
     }
     pageFlip.on("flip", onFlip);
     armWatchdog();
-    dir > 0 ? pageFlip.flipNext() : pageFlip.flipPrev();  
+    dir > 0 ? pageFlip.flipNext() : pageFlip.flipPrev();   
   }
 
   nextBtn.addEventListener("click", goNext);
@@ -210,6 +249,22 @@
     if (e.key === "ArrowRight") goNext();
     if (e.key === "ArrowLeft") goPrev();
   });
+
+  let swiped = false;
+  let swX = 0, swY = 0;
+  book.addEventListener("touchstart", (e) => {
+    const t = e.touches[0]; if (!t) return;
+    swX = t.clientX; swY = t.clientY; swiped = false;
+  }, { passive: true });
+  book.addEventListener("touchend", (e) => {
+    if (document.getElementById("lightbox").classList.contains("open")) return;
+    const t = e.changedTouches[0]; if (!t) return;
+    const dx = t.clientX - swX, dy = t.clientY - swY;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      swiped = true;               
+      if (dx < 0) goNext(); else goPrev();
+    }
+  }, { passive: true });
 
   const lightbox = document.getElementById("lightbox");
   const holoCard = document.getElementById("holoCard");
@@ -238,6 +293,7 @@
   }
 
   book.addEventListener("click", (e) => {
+    if (swiped) { swiped = false; return; }   
     const hot = e.target.closest(".slot-hot.filled");
     if (hot) openCard(hot);
   });
@@ -245,28 +301,69 @@
   lightbox.addEventListener("click", (e) => { if (e.target === lightbox) closeCard(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCard(); });
 
-  function tilt(e) {
+  function tiltAt(clientX, clientY) {
     const rect = holoCard.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
+    const px = (clientX - rect.left) / rect.width;
+    const py = (clientY - rect.top) / rect.height;
     holoCard.style.transform =
       `perspective(900px) rotateX(${(0.5 - py) * 16}deg) rotateY(${(px - 0.5) * 16}deg) scale(1.02)`;
     shine.style.backgroundPosition = `${px * 100}% ${py * 100}%`;
     glare.style.setProperty("--gx", px * 100 + "%");
     glare.style.setProperty("--gy", py * 100 + "%");
   }
-  holoCard.addEventListener("pointermove", tilt);
-  holoCard.addEventListener("pointerleave", () => {
+  holoCard.addEventListener("pointermove", (e) => tiltAt(e.clientX, e.clientY));
+  holoCard.addEventListener("pointerleave", resetTilt);
+  
+  holoCard.addEventListener("touchmove", (e) => {
+    const t = e.touches[0];
+    if (t) { tiltAt(t.clientX, t.clientY); e.preventDefault(); }
+  }, { passive: false });
+  holoCard.addEventListener("touchend", resetTilt);
+  function resetTilt() {
     holoCard.style.transform = "perspective(900px) rotateX(0) rotateY(0)";
-  });
+  }
 
   function showError(msg) {
     loading.classList.remove("hide");
     loading.innerHTML = `<span>${msg}</span>`;
   }
 
+  const PACK_KEY = "msi-pack-seen-" + (window.STICKER_USER || "anon");
+
+  function cardFor(n) {
+    return { n, img: owned[n], rarity: rarityForNumber(n) };
+  }
+
+  function openInChunks(cards) {
+    const packs = [];
+    for (let i = 0; i < cards.length; i += 6) packs.push(cards.slice(i, i + 6));
+    return packs.reduce((p, pk) => p.then(() => window.PackOpening.open(pk)), Promise.resolve());
+  }
+
+  function maybeOpenPack() {
+    if (!window.PackOpening) return;
+    const current = Object.keys(owned).map(Number).sort((a, b) => a - b);
+    let seen = null;
+    try { seen = JSON.parse(localStorage.getItem(PACK_KEY)); } catch (e) {}
+    const save = () => localStorage.setItem(PACK_KEY, JSON.stringify(current));
+    if (!Array.isArray(seen)) { save(); return; }        
+    const fresh = current.filter((n) => !seen.includes(n));
+    if (!fresh.length) { save(); return; }
+    openInChunks(fresh.map(cardFor)).then(save);         
+  }
+
+  window.demoPack = function (count = 3) {
+    const pool = Object.keys(owned).map(Number);
+    if (!pool.length) return console.warn("no hay fichas para la demo");
+    const pick = [];
+    while (pick.length < count && pool.length) {
+      pick.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    }
+    return window.PackOpening.open(pick.map(cardFor));
+  };
+
   Promise.all([
-    fetch("/api/collection").then((r) => r.json()),
+    fetch(COLLECTION_URL).then((r) => r.json()),
     fetch(SLOTS_URL).then((r) => r.json()),
   ])
     .then(([col, manifest]) => {
@@ -278,6 +375,7 @@
       initPageFlip();
       updateChrome(0);
       loading.classList.add("hide");
+      setTimeout(maybeOpenPack, 600);
     })
     .catch((err) => {
       showError("Error al cargar el álbum: " + err.message);

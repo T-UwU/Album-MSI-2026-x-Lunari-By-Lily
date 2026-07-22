@@ -1,3 +1,4 @@
+
 (function () {
   const canvas = document.getElementById("embers") || document.getElementById("dust");
   if (!canvas) return;
